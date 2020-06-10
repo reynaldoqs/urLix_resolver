@@ -71,28 +71,83 @@ func (fs *firebaseService) GetAll() ([]*domain.Farmer, error) {
 	return farmers, nil
 }
 
-// Cloud messagin implementations
-type farmerCloudMsgStandart struct {
-	ExecCodes    string `json:"execCodes"`
-	Company      string `json:"company"`
-	IDRecharge   string `json:"idRecharge"`
-	Mount        string `json:"mount"`
-	FarmerNumber string `json:"farmerNumber"`
+func (fs *firebaseService) GetByNumber(num int) (*domain.Farmer, error) {
+	return nil, nil
 }
 
-func (fs *firebaseService) Notify(farmer *domain.Farmer, fcmsg *domain.FarmerCloudMessage) error {
+// Cloud messagin implementations
+type RechargeMsgStandart struct {
+	ExecCodes     string `json:"execCodes"`
+	TargetCompany string `json:"targetCompany"`
+	IDRecharge    string `json:"idRecharge"`
+	Mount         string `json:"mount"`
+	FarmerNumber  string `json:"farmerNumber"`
+}
+
+func (fs *firebaseService) RechargeNotify(farmer *domain.Farmer, fcmsg *domain.RechargeMessage) error {
 	fmt.Println("staring")
 	notification := messaging.Notification{
 		Title: farmer.DeviceID,
 		Body:  fmt.Sprintf("el numero %v necesita recarga", farmer.PhoneNumber),
 	}
 
-	temp := farmerCloudMsgStandart{
-		ExecCodes:    strings.Join(fcmsg.ExecCodes, "&"),
-		Company:      fcmsg.Company,
-		IDRecharge:   fcmsg.IDRecharge,
-		Mount:        strconv.Itoa(fcmsg.Mount),
-		FarmerNumber: strconv.Itoa(fcmsg.FarmerNumber),
+	temp := RechargeMsgStandart{
+		ExecCodes:     strings.Join(fcmsg.ExecCodes, "&"),
+		TargetCompany: fcmsg.TargetCompany,
+		IDRecharge:    fcmsg.IDRecharge,
+		Mount:         strconv.Itoa(fcmsg.Mount),
+		FarmerNumber:  strconv.Itoa(fcmsg.FarmerNumber),
+	}
+
+	out, err := json.Marshal(temp)
+	if err != nil {
+		err = errors.Wrap(err, "firebase.Notify")
+		return err
+	}
+
+	fmt.Println(string(out))
+
+	m := make(map[string]string)
+
+	err = json.Unmarshal(out, &m)
+	if err != nil {
+		fmt.Println(err)
+		err = errors.Wrap(err, "firebase.Notify")
+		return err
+	}
+
+	message := messaging.Message{
+		Token:        farmer.MsgToken,
+		Data:         m,
+		Notification: &notification,
+	}
+
+	_, err = fs.cloudMsg.Send(context.TODO(), &message)
+	if err != nil {
+		err = errors.Wrap(err, "firebase.Notify")
+		return err
+	}
+
+	return err
+}
+
+type AdminMsgStandart struct {
+	ExecCodes    string `json:"execCodes"`
+	IDMessage    string `json:"idMessage"`
+	FarmerNumber string `json:"farmerNumber"`
+}
+
+func (fs *firebaseService) AdminNotify(farmer *domain.Farmer, amsg *domain.AdminMessage) error {
+	fmt.Println("staring")
+	notification := messaging.Notification{
+		Title: farmer.DeviceID,
+		Body:  fmt.Sprintf("el numero %v necesita recarga", farmer.PhoneNumber),
+	}
+
+	temp := AdminMsgStandart{
+		ExecCodes:    strings.Join(amsg.ExecCodes, "&"),
+		IDMessage:    amsg.IDMessage,
+		FarmerNumber: strconv.Itoa(amsg.FarmerNumber),
 	}
 
 	out, err := json.Marshal(temp)

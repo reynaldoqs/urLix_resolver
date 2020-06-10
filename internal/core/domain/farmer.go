@@ -10,11 +10,3 @@ type Farmer struct {
 	Status         int    `firestore:"status"`
 	IsOnline       bool   `firestore:"isOnline"`
 }
-
-type FarmerCloudMessage struct {
-	ExecCodes    []string `json:"execCodes"`
-	Company      string   `json:"company"`
-	IDRecharge   string   `json:"idRecharge"`
-	Mount        int      `json:"mount"`
-	FarmerNumber int      `json:"farmerNumber"`
-}

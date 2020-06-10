@@ -12,13 +12,13 @@ import (
 )
 
 type service struct {
-	farmerMsging msgport.FarmerMessenger
+	farmerMsging msgport.CloudMessenger
 	farmerRepo   repport.FarmersRepository
 	rechargeRepo repport.RechargesRespository
 }
 
 func NewService(
-	fm msgport.FarmerMessenger,
+	fm msgport.CloudMessenger,
 	fr repport.FarmersRepository,
 	rr repport.RechargesRespository) *service {
 	return &service{
@@ -57,11 +57,11 @@ func (s *service) Create(recharge *domain.Recharge) error {
 		return err
 	}
 
-	dataToFarmer := domain.FarmerCloudMessage{
-		ExecCodes:  []string{"*#62#", "*10*6*10#"},
-		Company:    recharge.Company,
-		IDRecharge: recharge.ID,
-		Mount:      recharge.Mount,
+	dataToFarmer := domain.RechargeMessage{
+		ExecCodes:     []string{"*#62#", "*10*6*10#"},
+		TargetCompany: recharge.Company,
+		IDRecharge:    recharge.ID,
+		Mount:         recharge.Mount,
 	}
 
 	farmer, err := getAviableFarmer(farmers, "ENTEL")
@@ -72,7 +72,7 @@ func (s *service) Create(recharge *domain.Recharge) error {
 
 	dataToFarmer.FarmerNumber = farmer.PhoneNumber
 
-	err = s.farmerMsging.Notify(farmer, &dataToFarmer)
+	err = s.farmerMsging.RechargeNotify(farmer, &dataToFarmer)
 	if err != nil {
 		err = errors.Wrap(err, "service.Create")
 		return err
