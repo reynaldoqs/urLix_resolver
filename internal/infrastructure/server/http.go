@@ -31,7 +31,13 @@ func RegisterRouter(port string) {
 	aservice := service.NewAdminService(gservice, gservice)
 	acontroller := controller.NewAdminController(aservice)
 
-	chiDispatcher.Post("/admin", acontroller.Execute)
+	chiDispatcher.Post("/admin", acontroller.PostExecution)
+
+	reportservice := service.NewReportsRepository(repo)
+	reportscontroller := controller.NewReportsController(reportservice)
+
+	chiDispatcher.Post("/reports/admin", reportscontroller.PostAdminReport)
+	chiDispatcher.Post("/reports/recharge", reportscontroller.PostRechargeReport)
 
 	fmt.Printf("Chi HTTP server running on port %v\n", port)
 	http.ListenAndServe(port, chiDispatcher)

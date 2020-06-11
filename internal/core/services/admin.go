@@ -29,7 +29,7 @@ func (ad *admin) Execute(order *domain.AdminMessage) error {
 		err = errors.Wrap(err, "admin.Execute")
 		return err
 	}
-
+	// save on repo then get id
 	order.IDMessage = "noId"
 	fmt.Println(order)
 	err = ad.cloudMsging.AdminNotify(farmer, order)

@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// status |sent|resolved|with code error| 
 // Recharge is a global representation of an recharge
 type Recharge struct {
 	ID          string    `json:"id"`

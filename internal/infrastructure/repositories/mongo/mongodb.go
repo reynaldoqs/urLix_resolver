@@ -60,7 +60,7 @@ func (mdb *mongoDataBase) GetAll() ([]*domain.Recharge, error) {
 
 	cur, err := collection.Find(context.TODO(), bson.D{{}}, findOptions)
 	if err != nil {
-		err := errors.Wrap(err, "rechargesrepo.GetAll")
+		err := errors.Wrap(err, "mongodb.GetAll")
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func (mdb *mongoDataBase) GetAll() ([]*domain.Recharge, error) {
 		var elem domain.Recharge
 		err := cur.Decode(&elem)
 		if err != nil {
-			err := errors.Wrap(err, "rechargesrepo.GetAll")
+			err := errors.Wrap(err, "mongodb.GetAll")
 			return nil, err
 		}
 
@@ -77,7 +77,7 @@ func (mdb *mongoDataBase) GetAll() ([]*domain.Recharge, error) {
 	}
 
 	if err := cur.Err(); err != nil {
-		err := errors.Wrap(err, "rechargesrepo.GetAll")
+		err := errors.Wrap(err, "mongodb.GetAll")
 		return nil, err
 	}
 
@@ -106,12 +106,60 @@ func (mdb *mongoDataBase) Save(recharge *domain.Recharge) error {
 	)
 
 	if err != nil {
-		err := errors.Wrap(err, "rechargesrepo.Save")
+		err := errors.Wrap(err, "mongodb.Save")
 		return err
 	}
 
 	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
 		recharge.ID = oid.Hex()
+	}
+
+	return err
+}
+
+// ReportRepository implementations
+func (mdb *mongoDataBase) SaveR(report *domain.RechargeReport) error {
+	ctx, cancel := context.WithTimeout(context.Background(), mdb.timeout)
+	defer cancel()
+
+	collection := mdb.client.Database(mdb.database).Collection("rechargeReports")
+
+	_, err := collection.InsertOne(
+		ctx,
+		bson.M{
+			"idRecharge":    report.IDRecharge,
+			"farmerNumber":  report.FarmerNumber,
+			"successful":    report.Successful,
+			"codeResponses": report.CodeResponses,
+		},
+	)
+
+	if err != nil {
+		err := errors.Wrap(err, "mongodb.SaveR")
+		return err
+	}
+
+	return err
+}
+func (mdb *mongoDataBase) SaveA(report *domain.AdminMsgReport) error {
+	ctx, cancel := context.WithTimeout(context.Background(), mdb.timeout)
+	defer cancel()
+
+	collection := mdb.client.Database(mdb.database).Collection("adminReports")
+
+	_, err := collection.InsertOne(
+		ctx,
+		bson.M{
+			"idMessage":     report.IDMessage,
+			"farmerNumber":  report.FarmerNumber,
+			"successful":    report.Successful,
+			"codeResponses": report.CodeResponses,
+		},
+	)
+
+	if err != nil {
+		err := errors.Wrap(err, "mongodb.SaveA")
+		return err
 	}
 
 	return err

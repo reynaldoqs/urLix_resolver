@@ -19,7 +19,7 @@ func NewAdminController(srv serviceport.AdminService) *adminController {
 	}
 }
 
-func (as *adminController) Execute(res http.ResponseWriter, req *http.Request) {
+func (as *adminController) PostExecution(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Content-Type", "application/json")
 

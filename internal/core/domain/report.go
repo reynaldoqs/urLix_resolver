@@ -6,7 +6,12 @@ type RechargeReport struct {
 	Successful    bool           `json:"successful"`
 	CodeResponses []codeResponse `json:"codeRespones"`
 }
-
+type AdminMsgReport struct {
+	IDMessage     string         `json:"idMessage"`
+	FarmerNumber  int            `json:"farmerNumber"`
+	Successful    bool           `json:"successful"`
+	CodeResponses []codeResponse `json:"codeRespones"`
+}
 type codeResponse struct {
 	Code     string `json:"code"`
 	Response string `json:"response"`
