@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/reynaldoqs/urLix_resolver/internal/core/domain"
 	msgport "github.com/reynaldoqs/urLix_resolver/internal/core/ports/cloudmessaging"
@@ -28,13 +30,9 @@ func (ad *admin) Execute(order *domain.AdminMessage) error {
 		return err
 	}
 
-	message := domain.AdminMessage{
-		ExecCodes:    []string{"*#62#", "*10*6*10#"},
-		FarmerNumber: farmer.PhoneNumber,
-		IDMessage:    "00",
-	}
-
-	err = ad.cloudMsging.AdminNotify(farmer, &message)
+	order.IDMessage = "noId"
+	fmt.Println(order)
+	err = ad.cloudMsging.AdminNotify(farmer, order)
 	if err != nil {
 		err = errors.Wrap(err, "admin.Execute")
 		return err

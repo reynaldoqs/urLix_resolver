@@ -21,11 +21,18 @@ func RegisterRouter(port string) {
 
 	repo := mongodb.NewRechargesRepository("mongodb://localhost:27017", "project-x", 30)
 	gservice := ffirebase.NewFirebaseApp("./gu-project.json")
+
 	rservice := service.NewService(gservice, gservice, repo)
 	rcontroller := controller.NewRechargesController(rservice)
 
 	chiDispatcher.Get("/recharges", rcontroller.GetRecharges)
 	chiDispatcher.Post("/recharges", rcontroller.AddRecharge)
+
+	aservice := service.NewAdminService(gservice, gservice)
+	acontroller := controller.NewAdminController(aservice)
+
+	chiDispatcher.Post("/admin", acontroller.Execute)
+
 	fmt.Printf("Chi HTTP server running on port %v\n", port)
 	http.ListenAndServe(port, chiDispatcher)
 

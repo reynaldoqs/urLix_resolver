@@ -72,7 +72,24 @@ func (fs *firebaseService) GetAll() ([]*domain.Farmer, error) {
 }
 
 func (fs *firebaseService) GetByNumber(num int) (*domain.Farmer, error) {
-	return nil, nil
+	collection := fs.store.Collection("farmerResolvers")
+
+	var farmer domain.Farmer
+
+	dsnap, err := collection.Doc(strconv.Itoa(num)).Get(context.TODO())
+	if err != nil {
+		err = errors.Wrap(err, "firebase.GetByNumber")
+		return nil, err
+	}
+
+	err = dsnap.DataTo(&farmer)
+
+	if err != nil {
+		err = errors.Wrap(err, "firebase.GetByNumber")
+		return nil, err
+	}
+
+	return &farmer, nil
 }
 
 // Cloud messagin implementations

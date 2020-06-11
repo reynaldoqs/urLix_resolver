@@ -9,8 +9,7 @@ type RechargeMessage struct {
 }
 
 type AdminMessage struct {
-	ExecCodes []string `json:"execCodes"`
-
-	IDMessage    string `json:"idMessage"`
-	FarmerNumber int    `json:"farmerNumber"`
+	ExecCodes    []string `json:"execCodes"`
+	IDMessage    string   `json:"idMessage"`
+	FarmerNumber int      `json:"farmerNumber"`
 }
