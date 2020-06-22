@@ -12,14 +12,17 @@ import (
 type admin struct {
 	cloudMsging msgport.CloudMessenger
 	farmerRepo  repport.FarmersRepository
+	ussdRepo    repport.UssdRepository
 }
 
 func NewAdminService(
 	fm msgport.CloudMessenger,
-	fr repport.FarmersRepository) *admin {
+	fr repport.FarmersRepository,
+	ur repport.UssdRepository) *admin {
 	return &admin{
 		cloudMsging: fm,
 		farmerRepo:  fr,
+		ussdRepo:    ur,
 	}
 }
 
@@ -38,4 +41,16 @@ func (ad *admin) Execute(order *domain.AdminMessage) error {
 		return err
 	}
 	return err
+}
+
+//USSD implementations
+
+func (ad *admin) GetActions() ([]*domain.UssdAction, error) {
+	return ad.ussdRepo.GetUssdActions()
+}
+func (ad *admin) AddAction(ussd *domain.UssdAction) error {
+	return ad.ussdRepo.SaveUssd(ussd)
+}
+func (ad *admin) UpdateAction(ussd *domain.UssdAction) error {
+	return ad.ussdRepo.UpdateUssd(ussd)
 }

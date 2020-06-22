@@ -164,3 +164,94 @@ func (mdb *mongoDataBase) SaveA(report *domain.AdminMsgReport) error {
 
 	return err
 }
+
+// Ussd Repository implementation
+
+func (mdb *mongoDataBase) GetUssdActions() ([]*domain.UssdAction, error) {
+	collection := mdb.client.Database(mdb.database).Collection("ussdActions")
+	findOptions := options.Find()
+
+	var results []*domain.UssdAction
+
+	cur, err := collection.Find(context.TODO(), bson.D{{}}, findOptions)
+	if err != nil {
+		err := errors.Wrap(err, "mongodb.GetUssdActions")
+		return nil, err
+	}
+
+	for cur.Next(context.TODO()) {
+
+		var elem domain.UssdAction
+		err := cur.Decode(&elem)
+		if err != nil {
+			err := errors.Wrap(err, "mongodb.GetUssdActions")
+			return nil, err
+		}
+
+		results = append(results, &elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		err := errors.Wrap(err, "mongodb.GetUssdActions")
+		return nil, err
+	}
+
+	cur.Close(context.TODO())
+	return results, nil
+}
+
+func (mdb *mongoDataBase) GetByAction(action string) (*domain.UssdAction, error) {
+	collection := mdb.client.Database(mdb.database).Collection("ussdActions")
+	findOptions := options.FindOne()
+
+	var result *domain.UssdAction
+
+	res := collection.FindOne(context.TODO(), bson.M{"action": action}, findOptions)
+
+	err := res.Decode(&result)
+	if err != nil {
+		err := errors.Wrap(err, "mongodb.GetByAction")
+		return nil, err
+	}
+	return result, nil
+
+}
+func (mdb *mongoDataBase) SaveUssd(ussd *domain.UssdAction) error {
+	ctx, cancel := context.WithTimeout(context.Background(), mdb.timeout)
+	defer cancel()
+
+	collection := mdb.client.Database(mdb.database).Collection("ussdActions")
+
+	_, err := collection.InsertOne(
+		ctx,
+		bson.M{
+			"ussdSteps": ussd.UssdSteps,
+			"action":    ussd.Action,
+		},
+	)
+
+	if err != nil {
+		err := errors.Wrap(err, "mongodb.SaveUssd")
+		return err
+	}
+
+	return err
+
+}
+func (mdb *mongoDataBase) UpdateUssd(ussd *domain.UssdAction) error {
+	collection := mdb.client.Database(mdb.database).Collection("ussdActions")
+	filter := bson.D{{"action", ussd.Action}}
+
+	updateResult := collection.FindOneAndUpdate(context.TODO(), filter, bson.D{
+		{"$set", bson.D{
+			{"ussdSteps", ussd.UssdSteps},
+		}},
+	})
+
+	if err := updateResult.Err(); err != nil {
+		err := errors.Wrap(err, "mongodb.SaveUssd")
+		return err
+	}
+	return nil
+
+}

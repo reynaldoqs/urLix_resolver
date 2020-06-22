@@ -15,16 +15,20 @@ type service struct {
 	farmerMsging msgport.CloudMessenger
 	farmerRepo   repport.FarmersRepository
 	rechargeRepo repport.RechargesRespository
+	ussdRepo     repport.UssdRepository
 }
 
 func NewService(
 	fm msgport.CloudMessenger,
 	fr repport.FarmersRepository,
-	rr repport.RechargesRespository) *service {
+	rr repport.RechargesRespository,
+	ur repport.UssdRepository,
+) *service {
 	return &service{
 		farmerMsging: fm,
 		farmerRepo:   fr,
 		rechargeRepo: rr,
+		ussdRepo:     ur,
 	}
 }
 
@@ -47,34 +51,54 @@ func (s *service) Create(recharge *domain.Recharge) error {
 
 	err := s.rechargeRepo.Save(recharge)
 	if err != nil {
-		err = errors.Wrap(err, "service.Create")
+		err = errors.Wrap(err, "recharge.Create")
 		return err
 	}
 
 	farmers, err := s.farmerRepo.GetAll()
 	if err != nil {
-		err = errors.Wrap(err, "service.Create")
+		err = errors.Wrap(err, "recharge.Create")
 		return err
-	}
-
-	dataToFarmer := domain.RechargeMessage{
-		ExecCodes:     []string{"*#62#", "*10*6*10#"},
-		TargetCompany: recharge.Company,
-		IDRecharge:    recharge.ID,
-		Mount:         recharge.Mount,
 	}
 
 	farmer, err := getAviableFarmer(farmers, "ENTEL")
 	if err != nil {
-		err = errors.Wrap(err, "service.Create")
+		err = errors.Wrap(err, "recharge.Create")
 		return err
+	}
+
+	//set actios
+	var actions []string
+
+	action, err := s.ussdRepo.GetByAction("recarga_tarjeta")
+	if err != nil {
+		fmt.Println(err)
+		err = errors.Wrap(err, "recharge.Create")
+		return err
+	}
+	fmt.Println(action)
+	err = action.Replace("#", recharge.CardNumber)
+	if err != nil {
+		fmt.Println(err)
+		err = errors.Wrap(err, "recharge.Create")
+		return err
+	}
+	fmt.Println(action)
+	actions = append(actions, action.GetUSSD())
+
+	fmt.Println(actions)
+	dataToFarmer := domain.RechargeMessage{
+		ExecCodes:     actions,
+		TargetCompany: recharge.Company,
+		IDRecharge:    recharge.ID,
+		Mount:         recharge.Mount,
 	}
 
 	dataToFarmer.FarmerNumber = farmer.PhoneNumber
 
 	err = s.farmerMsging.RechargeNotify(farmer, &dataToFarmer)
 	if err != nil {
-		err = errors.Wrap(err, "service.Create")
+		err = errors.Wrap(err, "recharge.Create")
 		return err
 	}
 	return err

@@ -19,21 +19,24 @@ func RegisterRouter(port string) {
 	chiDispatcher.Use(middleware.Logger)
 	chiDispatcher.Use(middleware.Recoverer)
 
-	repo := mongodb.NewRechargesRepository("mongodb://localhost:27017", "project-x", 30)
+	mrepo := mongodb.NewRechargesRepository("mongodb://localhost:27017", "project-x", 30)
 	gservice := ffirebase.NewFirebaseApp("./gu-project.json")
 
-	rservice := service.NewService(gservice, gservice, repo)
+	rservice := service.NewService(gservice, gservice, mrepo, mrepo)
 	rcontroller := controller.NewRechargesController(rservice)
 
 	chiDispatcher.Get("/recharges", rcontroller.GetRecharges)
 	chiDispatcher.Post("/recharges", rcontroller.AddRecharge)
 
-	aservice := service.NewAdminService(gservice, gservice)
+	aservice := service.NewAdminService(gservice, gservice, mrepo)
 	acontroller := controller.NewAdminController(aservice)
 
-	chiDispatcher.Post("/admin", acontroller.PostExecution)
+	chiDispatcher.Post("/admin/exec", acontroller.PostExecution)
+	chiDispatcher.Post("/admin/ussd", acontroller.PostUssdAction)
+	chiDispatcher.Get("/admin/ussd", acontroller.GetUssdActions)
+	chiDispatcher.Patch("/admin/ussd", acontroller.PatchUssdAction)
 
-	reportservice := service.NewReportsRepository(repo)
+	reportservice := service.NewReportsRepository(mrepo)
 	reportscontroller := controller.NewReportsController(reportservice)
 
 	chiDispatcher.Post("/reports/admin", reportscontroller.PostAdminReport)
